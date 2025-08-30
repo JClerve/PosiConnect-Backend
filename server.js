@@ -1,32 +1,35 @@
 require("dotenv").config();
 const express = require("express");
 const connectDB = require("./config/db");
+const cors = require("cors");
 
 // Connect to DB
 connectDB();
 
 const app = express();
 
-// Enable CORS
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  res.header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(200);
-  }
-  next();
-});
+// Enable CORS (allow PUT and OPTIONS for preflight)
+const corsOptions = {
+  origin: "http://localhost:3000", // adjust for production
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Origin",
+    "X-Requested-With",
+    "Content-Type",
+    "Accept",
+    "Authorization",
+  ],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+// ensure preflight requests are handled
+app.options("*", cors(corsOptions));
 
 app.use(express.json());
 
 // Redirect backend GET reset-password route to frontend
-app.get('/api/auth/reset-password/:token', (req, res) => {
-  const clientUrl = process.env.CLIENT_URL || 'http://localhost:3000';
+app.get("/api/auth/reset-password/:token", (req, res) => {
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
   const { token } = req.params;
   return res.redirect(`${clientUrl}/reset-password/${token}`);
 });
@@ -35,14 +38,20 @@ app.get('/api/auth/reset-password/:token', (req, res) => {
 const authRoutes = require("./routes/authRoutes");
 const communityRoutes = require("./routes/communityRoutes");
 const postsRoutes = require("./routes/postsRoutes");
-const expertRoutes = require('./routes/expertRoutes');
+const expertRoutes = require("./routes/expertRoutes");
+const sessionsRouter = require("./routes/sessions");
+const memberSessionsRoutes = require("./routes/memberSessions"); // <-- new
 
 app.use("/api/auth", authRoutes);
 // Post routes nested under community ID (must come before communityRoutes to avoid 404)
 app.use("/api/communities/:id/posts", postsRoutes);
 // Community routes
 app.use("/api/communities", communityRoutes);
-app.use('/api/experts', expertRoutes);
+app.use("/api/experts", expertRoutes);
+
+app.use("/api/sessions", sessionsRouter);
+// Member-specific session routes
+app.use("/api/sessions/member", memberSessionsRoutes);
 
 // User route for profile
 const { protect } = require("./middleware/auth");
