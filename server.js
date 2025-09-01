@@ -41,6 +41,7 @@ const postsRoutes = require("./routes/postsRoutes");
 const expertRoutes = require("./routes/expertRoutes");
 const sessionsRouter = require("./routes/sessions");
 const memberSessionsRoutes = require("./routes/memberSessions"); // <-- new
+const paymentRoutes = require("./routes/paymentRoutes"); // <-- added
 
 app.use("/api/auth", authRoutes);
 // Post routes nested under community ID (must come before communityRoutes to avoid 404)
@@ -52,6 +53,9 @@ app.use("/api/experts", expertRoutes);
 app.use("/api/sessions", sessionsRouter);
 // Member-specific session routes
 app.use("/api/sessions/member", memberSessionsRoutes);
+
+// Payment routes
+app.use("/api/payments", paymentRoutes);
 
 // User route for profile
 const { protect } = require("./middleware/auth");
